@@ -111,14 +111,14 @@ const getMeaning = (card, position, isReversed) => {
 };
 
 const TIERS = [
-  { id: 'Free', name: 'Free', price: 'Miễn phí', color: 'from-slate-600 to-slate-800', features: ['Bói cơ bản', '3 Chủ đề'] },
+  { id: 'Free', name: 'Cơ bản', price: 'Miễn phí', color: 'from-slate-600 to-slate-800', features: ['Bói cơ bản', '3 Chủ đề'] },
   { id: 'Plus', name: 'Plus', price: '49.000đ', color: 'from-blue-600 to-indigo-600', features: ['Mở khóa 10 chủ đề', 'Lưu lịch sử 7 ngày'] },
   { id: 'Pro', name: 'Pro', price: '99.000đ', color: 'from-purple-600 to-pink-600', features: ['Tất cả chủ đề', 'Lưu lịch sử 30 ngày', 'Không quảng cáo'] },
-  { id: 'Vip', name: 'VIP', price: '199.000đ', color: 'from-amber-500 to-orange-600', features: ['Full tính năng', 'Ưu tiên hỗ trợ', 'Huy hiệu VIP'] },
+  { id: 'Premium', name: 'Premium', price: '199.000đ', color: 'from-amber-500 to-orange-600', features: ['Full tính năng', 'Ưu tiên hỗ trợ', 'Huy hiệu đặc quyền'] },
 ];
 
 export default function BoiTarotOnline() {
-  const [currentView, setCurrentView] = useState('home'); // home, library, readers, upgrade
+  const [currentView, setCurrentView] = useState('home'); 
   const [step, setStep] = useState('intro');
   const [userInfo, setUserInfo] = useState({ name: '', yob: '' });
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -134,6 +134,7 @@ export default function BoiTarotOnline() {
   const [userTier, setUserTier] = useState('Free');
   const [upgradeCode, setUpgradeCode] = useState('');
   const [bypassPayment, setBypassPayment] = useState(false);
+  
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedTierForPayment, setSelectedTierForPayment] = useState(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -154,7 +155,7 @@ export default function BoiTarotOnline() {
     } else {
       setCurrentView(view);
       if (view === 'home') {
-        setSelectedTopic(null); // Reset chủ đề khi về Trang chủ
+        setSelectedTopic(null);
         setStep('topics');
       }
     }
@@ -169,7 +170,13 @@ export default function BoiTarotOnline() {
       setDeck(newDeck);
       setPickedCards([]);
       setRevealedCards([]);
-      setStep('pick');
+      
+      // VÁ LỖI TẠI ĐÂY: Chỉ cho phép chuyển sang màn Rút bài 
+      // nếu người dùng vẫn đang ở màn hình Chờ xáo bài (chưa bấm quay lại)
+      setStep((currentStep) => {
+        if (currentStep === 'shuffle') return 'pick';
+        return currentStep;
+      });
     }, 2500);
   };
 
@@ -181,6 +188,7 @@ export default function BoiTarotOnline() {
   };
 
   const handlePick = (card) => {
+    if (!selectedTopic) return;
     const config = SPREAD_CONFIG[selectedTopic.type];
     if (pickedCards.length < config.cards && !pickedCards.find(c => c.uid === card.uid)) {
       const newPicked = [...pickedCards, card];
@@ -190,18 +198,25 @@ export default function BoiTarotOnline() {
   };
 
   const handleReveal = (idx) => { if (!revealedCards.includes(idx)) setRevealedCards([...revealedCards, idx]); };
-  const reset = () => { setStep('topics'); setPickedCards([]); setRevealedCards([]); };
+  const reset = () => { setStep('topics'); setSelectedTopic(null); setPickedCards([]); setRevealedCards([]); };
 
   const handleUpgradeClick = (tier) => {
-    if (bypassPayment) { setUserTier(tier.id); alert(`Đã kích hoạt gói ${tier.name} thành công!`); } 
-    else { setSelectedTierForPayment(tier); setShowPaymentModal(true); }
+    if (bypassPayment) { 
+        setUserTier(tier.id); 
+        alert(`Đã kích hoạt gói ${tier.name} thành công!`); 
+    } else { 
+        setSelectedTierForPayment(tier); 
+        setShowPaymentModal(true); 
+    }
   };
 
   const processPayment = () => {
     setIsProcessingPayment(true);
     setTimeout(() => {
-      setIsProcessingPayment(false); setShowPaymentModal(false); setUserTier(selectedTierForPayment.id);
-      alert("Thanh toán thành công!");
+      setIsProcessingPayment(false); 
+      setShowPaymentModal(false); 
+      setUserTier(selectedTierForPayment.id);
+      alert("Thanh toán thành công! Tài khoản của bạn đã được nâng cấp.");
     }, 3000);
   };
 
@@ -218,7 +233,13 @@ export default function BoiTarotOnline() {
       {/* HEADER */}
       <div className="relative z-40 h-16 flex items-center justify-between px-4 border-b border-white/5 bg-[#0c0a14]/95 backdrop-blur-md">
         {currentView === 'home' && step !== 'intro' && step !== 'info' ? (
-           <button onClick={() => { if (step !== 'topics') { setStep('topics'); setSelectedTopic(null); } }} className="p-2 -ml-2 text-slate-400 hover:text-white">
+           <button onClick={() => { 
+             if (step !== 'topics') { 
+               setStep('topics'); 
+               setSelectedTopic(null); 
+               setPickedCards([]);
+             } 
+           }} className="p-2 -ml-2 text-slate-400 hover:text-white">
              {step === 'topics' ? <div className="w-8"></div> : <ArrowLeft size={22}/>}
            </button>
         ) : (
@@ -231,6 +252,7 @@ export default function BoiTarotOnline() {
           <h1 className="font-serif font-bold text-lg bg-clip-text text-transparent bg-gradient-to-r from-amber-100 via-purple-200 to-amber-100 tracking-widest uppercase">
             BÓI TAROT ONLINE
           </h1>
+          {userTier !== 'Free' && <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30 uppercase tracking-wide">Tài Khoản {userTier}</span>}
         </div>
 
         <button onClick={() => setIsMenuOpen(true)} className="p-2 -mr-2 text-slate-300 hover:text-white">
@@ -253,7 +275,6 @@ export default function BoiTarotOnline() {
 
             <div className="flex-1 overflow-y-auto py-4">
               <nav className="space-y-1 px-3">
-                {/* Đã sửa điều kiện bôi đen (highlight) */}
                 <MenuButton 
                   active={currentView === 'home' && (!selectedTopic || !['daily', 'future'].includes(selectedTopic.type))} 
                   icon={<Home size={18}/>} label="Trang chủ (Mặc định)" onClick={() => handleMenuClick('home')} 
@@ -276,10 +297,66 @@ export default function BoiTarotOnline() {
                 />
                 
                 <div className="my-4 border-t border-white/5 mx-4"></div>
-                <MenuButton active={currentView === 'upgrade'} icon={<Crown size={18} className={currentView === 'upgrade' ? 'text-amber-300' : 'text-amber-500'}/>} label="Nâng Cấp VIP" onClick={() => handleMenuClick('upgrade')} highlight />
+                <MenuButton 
+                  active={currentView === 'upgrade'} 
+                  icon={<Crown size={18} className={currentView === 'upgrade' ? 'text-amber-300' : 'text-amber-500'}/>} 
+                  label="Nâng Cấp Tài Khoản" 
+                  onClick={() => handleMenuClick('upgrade')} 
+                  highlight 
+                />
               </nav>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* PAYMENT MODAL */}
+      {showPaymentModal && selectedTierForPayment && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
+           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in"></div>
+           <div className="relative bg-[#1a1625] w-full max-w-sm rounded-2xl border border-white/10 p-6 shadow-2xl animate-scale-up">
+              {!isProcessingPayment ? (
+                <>
+                  <div className="text-center mb-6">
+                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${selectedTierForPayment.color} mx-auto mb-3 flex items-center justify-center`}>
+                      <Wallet className="text-white w-6 h-6"/>
+                    </div>
+                    <h3 className="text-xl font-bold text-white">Thanh Toán Gói {selectedTierForPayment.name}</h3>
+                    <p className="text-amber-400 text-lg font-bold mt-1">{selectedTierForPayment.price}</p>
+                  </div>
+                  
+                  <div className="bg-black/30 p-4 rounded-xl border border-white/5 mb-6 space-y-3">
+                     <div className="flex justify-between text-sm">
+                       <span className="text-slate-400">Ngân hàng:</span>
+                       <span className="text-white font-medium">MB Bank</span>
+                     </div>
+                     <div className="flex justify-between text-sm">
+                       <span className="text-slate-400">Số tài khoản:</span>
+                       <span className="text-white font-bold tracking-wider text-lg">0999999999</span>
+                     </div>
+                     <div className="flex justify-between text-sm">
+                       <span className="text-slate-400">Chủ tài khoản:</span>
+                       <span className="text-white font-medium">ADMIN TAROT</span>
+                     </div>
+                     <div className="flex justify-between text-sm">
+                       <span className="text-slate-400">Nội dung:</span>
+                       <span className="text-purple-300 font-mono">TAROT {userInfo.name || 'USER'}</span>
+                     </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button onClick={() => setShowPaymentModal(false)} className="flex-1 py-3 rounded-lg border border-white/10 text-slate-400 hover:bg-white/5">Hủy</button>
+                    <button onClick={processPayment} className="flex-[2] py-3 rounded-lg bg-green-600 hover:bg-green-500 text-white font-bold shadow-lg shadow-green-900/30">Đã Chuyển Khoản</button>
+                  </div>
+                </>
+              ) : (
+                <div className="py-8 text-center">
+                  <Loader2 className="w-12 h-12 text-purple-400 animate-spin mx-auto mb-4" />
+                  <h3 className="text-lg font-bold text-white">Đang xử lý giao dịch...</h3>
+                  <p className="text-sm text-slate-400 mt-2">Vui lòng không tắt ứng dụng</p>
+                </div>
+              )}
+           </div>
         </div>
       )}
 
@@ -350,7 +427,8 @@ export default function BoiTarotOnline() {
               </div>
             )}
 
-            {step === 'pick' && (
+            {/* VÁ LỖI TẠI ĐÂY: Thêm điều kiện selectedTopic !== null để tránh crash */}
+            {step === 'pick' && selectedTopic && (
               <div className="flex-1 flex flex-col animate-fade-in">
                 <div className="px-6 py-6 text-center">
                   <h3 className="font-serif text-white text-lg">{selectedTopic.name}</h3>
@@ -376,7 +454,8 @@ export default function BoiTarotOnline() {
               </div>
             )}
 
-            {step === 'reading' && (
+            {/* VÁ LỖI TẠI ĐÂY: Thêm điều kiện selectedTopic !== null để tránh crash */}
+            {step === 'reading' && selectedTopic && (
               <div className="flex-1 overflow-y-auto px-4 py-8 pb-24 animate-fade-in">
                 <div className="text-center mb-8">
                   <div className="inline-block px-3 py-1 rounded-full bg-purple-900/30 border border-purple-500/20 text-[10px] uppercase tracking-widest text-purple-300 mb-2">Kết quả</div>
@@ -437,7 +516,6 @@ export default function BoiTarotOnline() {
                <button onClick={()=>setLibFilter('pentacles')} className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${libFilter === 'pentacles' ? 'bg-emerald-600 text-white' : 'bg-white/5 text-slate-400'}`}>Bộ Tiền</button>
              </div>
 
-             {/* Đã sửa Grid: Loại bỏ thuộc tính tự co dãn gây lỗi đè chồng chéo */}
              <div className="flex-1 overflow-y-auto w-full p-4 pb-24">
                <div className="grid grid-cols-3 gap-3 auto-rows-max">
                   {FULL_DECK.filter(c => c.suit === libFilter).map(card => (
@@ -445,12 +523,10 @@ export default function BoiTarotOnline() {
                           className="h-36 bg-[#151221] border border-white/10 rounded-xl p-2 flex flex-col items-center justify-between cursor-pointer hover:border-purple-500 hover:bg-[#1a1625] transition-all relative overflow-hidden group">
                        <div className={`absolute inset-0 ${card.suitInfo.bg} opacity-20 group-hover:opacity-40 transition-opacity`}></div>
                        
-                       {/* Nửa trên (Fix cứng chiều cao 50% để không đè) */}
                        <div className="h-1/2 w-full flex items-end justify-center pb-1 relative z-10">
                           <div className="text-4xl filter drop-shadow-md">{card.icon}</div>
                        </div>
                        
-                       {/* Nửa dưới chứa tên */}
                        <div className="h-1/2 w-full flex items-start justify-center pt-2 relative z-10 px-1">
                           <h4 className={`text-[11px] font-bold text-center leading-tight w-full line-clamp-2 ${card.suitInfo.color}`}>{card.nameVN}</h4>
                        </div>
@@ -483,6 +559,70 @@ export default function BoiTarotOnline() {
                   </div>
                 </div>
              )}
+          </div>
+        )}
+
+        {/* VIEW: UPGRADE ACCOUNT */}
+        {currentView === 'upgrade' && (
+          <div className="flex-1 overflow-y-auto p-4 animate-fade-in pb-20">
+            <div className="text-center mb-8 mt-4">
+              <Crown className="w-12 h-12 text-amber-400 mx-auto mb-4 animate-bounce" />
+              <h2 className="text-2xl font-serif text-white mb-2">Nâng Cấp Tài Khoản</h2>
+              <p className="text-sm text-slate-400">Trải nghiệm không giới hạn</p>
+            </div>
+
+            <div className="mb-8 p-4 bg-[#1a1625] rounded-xl border border-dashed border-white/20">
+              <label className="text-xs text-slate-500 uppercase tracking-widest block mb-2">Nhập mã giới thiệu (nếu có)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" placeholder="Nhập mã..." value={upgradeCode} onChange={checkCode}
+                  className="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-amber-500 text-sm"
+                />
+                <div className={`px-3 py-2 rounded-lg flex items-center justify-center w-12 ${bypassPayment ? 'bg-green-600' : 'bg-slate-700'}`}>
+                  {bypassPayment ? <Zap size={16} className="text-white"/> : <X size={16} className="text-slate-400"/>}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {TIERS.map((tier) => (
+                <div key={tier.id} className={`relative p-5 rounded-2xl border ${userTier === tier.id ? 'border-amber-500 bg-[#1e1b2e]' : 'border-white/10 bg-[#151221]'} overflow-hidden transition-all`}>
+                  {userTier === tier.id && <div className="absolute top-0 right-0 bg-amber-500 text-black text-[10px] font-bold px-2 py-1 rounded-bl-lg uppercase">Đang dùng</div>}
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                       <h3 className={`text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${tier.color}`}>{tier.name}</h3>
+                       <div className="text-lg text-white font-medium mt-1">{bypassPayment && tier.id !== 'Free' ? <span className="line-through text-slate-500 mr-2 text-sm">{tier.price}</span> : tier.price}</div>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 mb-4">
+                    {tier.features.map((ft, i) => (
+                      <li key={i} className="text-sm text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div> {ft}</li>
+                    ))}
+                  </ul>
+                  <button 
+                    disabled={userTier === tier.id || (tier.id === 'Free' && !bypassPayment)}
+                    onClick={() => handleUpgradeClick(tier)}
+                    className={`w-full py-3 rounded-lg font-bold text-sm uppercase tracking-wide transition-all
+                      ${userTier === tier.id ? 'bg-slate-800 text-slate-500 cursor-default' : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:shadow-lg shadow-orange-900/20'}
+                    `}
+                  >
+                    {userTier === tier.id ? 'Hiện Tại' : 'Nâng Cấp'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* VIEW: READERS */}
+        {currentView === 'readers' && (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-fade-in text-slate-400">
+             <Users size={48} className="mb-4 text-purple-400"/>
+             <h2 className="text-xl font-serif text-white mb-2">Kết Nối Reader</h2>
+             <p className="text-sm">Tính năng sắp ra mắt trong phiên bản tới.</p>
+             <button onClick={() => setCurrentView('home')} className="mt-8 px-6 py-2 bg-white/5 rounded-full text-white text-sm hover:bg-white/10 transition-colors">
+               Quay lại Trang chủ
+             </button>
           </div>
         )}
 
