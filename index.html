@@ -1,13 +1,36 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bói Tarot Online</title>
+    
+    <!-- 1. Tailwind CSS (Dùng CDN để hiển thị giao diện ngay mà không cần cài đặt) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              emerald: { 50: '#ecfdf5', 100: '#d1fae5', 600: '#059669' }
+            }
+          }
+        }
+      }
+    </script>
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="bg-gray-50">
+    <!-- Nơi React sẽ hiển thị ứng dụng -->
+    <div id="root">
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: #666;">
+        Đang tải ứng dụng...
+      </div>
+    </div>
+    
+    <!-- 2. QUAN TRỌNG: Kết nối với file code React của bạn -->
+    <!-- Nếu file code của bạn tên là main.jsx và nằm trong thư mục src -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
